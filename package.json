@@ -1,0 +1,23 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "Angular 2 in Action API",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/angular-in-action/api.git"
+  },
+  "keywords": [
+    "angular2"
+  ],
+  "author": "Jeremy Wilken <gnomation@gnomeontherun.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/angular-in-action/api/issues"
+  },
+  "homepage": "https://github.com/angular-in-action/api#readme",
+  "dependencies": {
+    "express": "4.13.1",
+    "yahoo-finance": "0.2.11"
+  }
+}
