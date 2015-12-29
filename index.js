@@ -50,6 +50,10 @@ router.get('/stocks/historical/:symbol', function(req, res) {
   });
 });
 
+router.get('/', function(req, res) {
+  res.status(200).send('Welcome to the Angular 2 in Action API. See <a href="https://github.com/angular-in-action/api#readme">https://github.com/angular-in-action/api#readme</a> for details.');
+});
+
 app.use('/', router);
 
 app.listen(app.get('port'), function() {
