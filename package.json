@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/angular-in-action/api#readme",
   "dependencies": {
+    "cors": "2.7.1",
     "express": "4.13.1",
     "yahoo-finance": "0.2.11"
   }

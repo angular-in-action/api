@@ -1,11 +1,15 @@
 'use strict';
 
+var cors = require('cors');
 var express = require('express');
 var path = require('path');
 var yahooFinance = require('yahoo-finance');
 
 // Express App
 var app = express();
+
+// Enable CORS
+app.use(cors());
 
 app.set('port', (process.env.PORT || 5000));
 
