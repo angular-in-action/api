@@ -2,6 +2,7 @@
 
 var cors = require('cors');
 var express = require('express');
+var request = require('request');
 var path = require('path');
 var yahooFinance = require('yahoo-finance');
 
@@ -52,6 +53,21 @@ router.get('/stocks/historical/:symbol', function(req, res) {
 
     res.status(200).send(quotes);
   });
+});
+
+// Endpoint to load an ipsum image.
+router.get('/images', function(req, res) {
+  var categories = ['abstract', 'animals', 'business', 'cats', 'city', 'food', 'nightlife', 'fashion', 'people', 'nature', 'sports', 'technics', 'transport'];
+
+  var path = [];
+  path.push(req.query.width ? req.query.width : 400);
+  path.push(req.query.height ? req.query.height : 400);
+  path.push(categories.indexOf(req.query.category) >=0 ? req.query.category : 'abstract');
+  if (req.query.text) {
+    path.push(req.query.text);
+  }
+
+  req.pipe(request('http://lorempixel.com/' + path.join('/'))).pipe(res);
 });
 
 router.get('/', function(req, res) {
