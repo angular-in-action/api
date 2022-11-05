@@ -1,4 +1,13 @@
-This contains the API service built and deployed to Heroku for Angular 2 in Action.
+This contains the API service for Angular 2 in Action. This is just a sample service, it no longer uses real live data since that adds a lot of complexity to setup and run.
+
+You will need to run this locally to get some of the examples to work from the book. It is pretty simple as long as you have a recent version of Node installed. 
+
+```
+git clone https://github.com/angular-in-action/api.git
+cd api
+npm install
+node index.js
+```
 
 ## APIs
 

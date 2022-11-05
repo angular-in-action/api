@@ -1,68 +1,18 @@
 'use strict';
 
-// Load config
-require('dotenv').config();
-
-if (!process.env.PROJECT_ID || !process.env.CLIENT_EMAIL || !process.env.PRIVATE_KEY || !process.env.FIREBASE_DB) {
-  console.error('Missing environment variables');
-  process.exit(1);
-}
-
 var cors = require('cors');
-var parse = require('csv-parse/lib/sync');
-var fs = require('fs');
 var express = require('express');
-var path = require('path');
-var yahooFinance = require('yahoo-finance');
-var firebase = require('firebase-admin');
 
 var app = express();
-var stocks = [];
+var stocks = require('./stocks.json');
 
 // Enable CORS
 app.use(cors());
 
-app.set('port', (process.env.PORT || 5000));
-app.set('projectId', (process.env.PROJECT_ID || ''));
-app.set('clientEmail', (process.env.CLIENT_EMAIL || ''));
-app.set('privateKey', (process.env.PRIVATE_KEY || ''));
-app.set('firebaseDB', (process.env.FIREBASE_DB || ''));
-
-// Initialize Firebase
-firebase.initializeApp({
-  credential: firebase.credential.cert({
-    projectId: app.get('projectId'),
-    clientEmail: app.get('clientEmail'),
-    privateKey: app.get('privateKey').replace(/\\n/g, '\n')
-  }),
-  databaseURL: app.get('firebaseDB')
-});
-
-var db = firebase.database();
-var ref = db.ref('stocks');
+app.set('port', (process.env.PORT || 3000));
 
 function getRandomInt(min, max) {
   return (Math.floor(Math.random() * (max - min + 1)) + min);
-}
-
-function loadSymbols() {
-  let csv = fs.readFileSync('./companies.csv', 'utf8');
-
-  stocks = parse(csv, {columns: true}).map(stock => {
-    let current = getRandomInt(5100, 80000) / 100;
-    let change = getRandomInt(-1000, 1000) / 100;
-    return {
-      symbol: stock.Symbol,
-      name: stock.Name,
-      price: current,
-      change: change
-    };
-  });
-
-  console.log(stocks.length + ' stocks loaded at ' + new Date());
-  ref.set(stocks);
-
-  setTimeout(loadSymbols, 1000 * 60 * 60 * 24); // Reload once a day
 }
 
 // Endpoint to load snapshot data from yahoo finance
@@ -73,15 +23,19 @@ app.get('/stocks/snapshot', function(req, res) {
       return symbol.toUpperCase();
     });
 
-    yahooFinance.snapshot({
-      symbols: symbols
-    }, function(err, snapshot) {
-      if (err) {
-        res.status(401).send(err);
-      }
+    const items = stocks.filter(stock => symbols.indexOf(stock.symbol) > -1);
 
-      res.status(200).send(snapshot);
+    // Add any new items someone might add
+    const missing = symbols.filter(symbol => !stocks.find(stock => stock.symbol === symbol));
+    missing.forEach(symbol => {
+      const lastTradePriceOnly = getRandomInt(0, 100);
+      const change = getRandomInt(0, 2);
+      const changeInPercent = change / lastTradePriceOnly;
+      stocks.push({symbol, lastTradePriceOnly, change, changeInPercent});
     });
+
+    res.status(200).send(items);
+
   } else {
     res.status(400).send({message: `The request requires at least one symbol. Try adding '?symbols=appl' to the request.`});
   }
@@ -112,9 +66,6 @@ app.listen(app.get('port'), function() {
   console.log('App is running on port ', app.get('port'));
 });
 
-// Load the initial data
-loadSymbols();
-
 // Every 10 seconds, change data values
 setInterval(() => {
   let start = Date.now();
@@ -123,19 +74,19 @@ setInterval(() => {
     .map(stock => {
       let index = getRandomInt(0, changes.length - 1);
       let change = changes[index];
-      if (stock.price > 1000) {
+      if (stock.lastTradePriceOnly > 1000) {
         change = -1;
       }
-      if (stock.price <= 1) {
+      if (stock.lastTradePriceOnly <= 1) {
         change = 1;
       }
       // Force it to be 2 decimals, cuz in JS floating point math can be lolz
       stock.change = parseInt((stock.change * 100) + change) / 100;
-      stock.price = parseInt((stock.price * 100) + change) / 100; 
+      stock.changeInPercent = parseInt((stock.changeInPercent * 100) + change) / 100; 
+      stock.changeInPercent = parseInt((stock.change * 100) / (stock.lastTradePriceOnly * 100) * 10000) / 10000;
       return stock;
     });
 
   console.log('new stocks %s ms', Date.now() - start);
 
-  if (ref) ref.set(stocks);
 }, 10000);
